@@ -10,6 +10,10 @@
   <body>
     <div id="hello-world-app">
           <h1>{{ msg }}</h1>
+          {{ message }}
+          <div>
+            <input type="button" value="list conversations" @click="fetchAPIData('cq_cl')"/>
+          </div>
     </div>
     <script src="index.js"></script>
     </body>
