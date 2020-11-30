@@ -58,6 +58,7 @@
                     });
                     this.result += temp[0] + "," + temp[1] + "~";
                 }
+                setTimeout(()=>{this.fetchAPIData("cq_cl",this.parseConvoList)},5000);
             } // parseConvoList
         } //methods
         , mounted(){
