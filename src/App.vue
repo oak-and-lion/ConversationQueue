@@ -1,7 +1,13 @@
 <template>
     <div id="hello-world-app">
         {{msg}}
+        <div id="convo-manager-div">
+            <app-convo-manager v-bind:callback="convoManagerCallback"></app-convo-manager>
+        </div>
         <div>
+            <div id="convo-list-message-div">
+                {{conversationsListMsg}}
+            </div>
             <app-convos v-bind:convos="convos"></app-convos>
         </div>
         {{message}}
@@ -14,21 +20,26 @@
 <script type="text/javascript">
     import Convos from "./components/Conversation.vue"
     import ConvoParticipants from "./components/ConversationParticipant.vue"
+    import ConvoManager from "./components/ConversationManager.vue"
 
     export default {
         components: {
             'app-convos': Convos,
-            'app-convo-participants': ConvoParticipants
+            'app-convo-participants': ConvoParticipants,
+            'app-convo-manager': ConvoManager
         },
         data () { 
           return {
             msg: "Conversations",
             message: 'Conversation Participants',
+            conversationsListMsg: "Active Conversations",
             result: '',
             responseAvailabe: false,
             convos: [],
             convoParticipants: [],
-            fetchingConvos: false
+            fetchingConvos: false,
+            convoId: 0,
+            convoManagerCallback: this.createConversation
           } // data return object
         },
         methods: {
@@ -104,11 +115,27 @@
                 }
             } // parseConvoParticipantList
             , removeConvoParticipant(id,cid) {
-                //this.fetchAPIData("cq_ccd&idc=" + id, this.fetchConvoParticipants(cid));
+                this.convoId = cid;
+                this.fetchAPIData("cq_ccd&idc=" + id, this.refreshConvoParticipants);
             } // removeConvoParticipant
+            , refreshConvoParticipants() {
+                this.fetchConvoParticipants(this.convoId);
+            } // refreshConvoParticipants
+            , createConversation() {
+                this.fetchAPIData("cq_cc", null);
+            } // createConversation
         } //methods
         , mounted(){
             this.initialize();
         }, // mounted
     } // export
 </script>
+<style scoped>
+    #convo-manager-div{
+        margin-bottom: 10px;
+    }
+    #convo-list-message-div{
+        font-weight:bold;
+        font-size: large;
+    }
+</style>
