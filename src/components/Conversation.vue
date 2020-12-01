@@ -3,7 +3,8 @@
         <ul>
             <li v-for='(convo,id) in convos' :key="id">
                 <span :convo-id="convo.id">{{convo.name}}</span>
-                <input type="button" v-on:click="showConvo(convo.id)" value="Show"/>
+                <input type="button" v-on:click="showConvo(convo.id,convo.callback)" value="Show"/>
+                <input type="button" v-on:click="showConvo(convo.id,convo.callback2)" value="Delete"/>
             </li>
         </ul>
     </div>
@@ -22,8 +23,8 @@ export default {
         }
     },
     methods: {
-        showConvo(id) {
-            console.log(id);
+        showConvo(id,callback) {
+            callback(id);
         }
     }
 }
