@@ -2,15 +2,17 @@
     <div id="hello-world-app">
         {{msg}}
         <div id="convo-manager-div">
-            <app-convo-manager v-bind:callback="convoManagerCallback"></app-convo-manager>
+            <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
         </div>
         <div>
             <div id="convo-list-message-div">
                 {{conversationsListMsg}}
             </div>
-            <app-convos v-bind:convos="convos"></app-convos>
+            <app-convos ref="appconvolist" v-bind:convos="convos"></app-convos>
         </div>
-        {{message}}
+        <div>
+            <span id="convo-participant-message">{{message}}</span> <span id="current-convo"></span>
+        </div>
         <div>
             <app-convo-participants v-bind:convoParticipants="convoParticipants"></app-convo-participants>
         </div>
@@ -39,6 +41,7 @@
             convoParticipants: [],
             fetchingConvos: false,
             convoId: 0,
+            convoName: '',
             convoManagerCallback: this.createConversation
           } // data return object
         },
@@ -85,17 +88,21 @@
                         id: temp[0],
                         name: temp[1],
                         callback: this.fetchConvoParticipants,
-                        callback2: this.removeConversation
+                        callback2: this.removeConversation,
+                        callback3: this.joinConversation
                     });
                     this.result += temp[0] + "," + temp[1] + "~";
                 }
-                this.fetchingConvos = false;                
+                this.fetchingConvos = false;
+                this.$refs.appconvomanager.endProcessing();
+                this.$refs.appconvolist.resetList();
                 setTimeout(()=>{this.initialize()},5000);
             } // parseConvoList
             , removeConversation(id) {
                 this.fetchAPIData("cq_cd&idc=" + id, null);
             } // removeConversation
-            , fetchConvoParticipants(id){
+            , fetchConvoParticipants(id,cname){
+                this.setConvoName(cname);
                 this.fetchAPIData("cq_ccl&idc=" + id,this.parseConvoParticipantList);
             } // fetchConvoParticipants
             , parseConvoParticipantList(response) {
@@ -119,11 +126,23 @@
                 this.fetchAPIData("cq_ccd&idc=" + id, this.refreshConvoParticipants);
             } // removeConvoParticipant
             , refreshConvoParticipants() {
-                this.fetchConvoParticipants(this.convoId);
+                this.fetchConvoParticipants(this.convoId,this.convoName);
             } // refreshConvoParticipants
-            , createConversation() {
-                this.fetchAPIData("cq_cc", null);
+            , createConversation(name) {
+                this.fetchAPIData("cq_ca&e=" + name, null);
             } // createConversation
+            , joinConversation(id,name,notes,cname) {
+                this.setConvoName(cname);
+                this.convoId=id;
+                this.convoName=cname;
+                this.fetchAPIData("cq_cca&idc="+id+"&n="+name+"&no="+notes, this.refreshConvoParticipants);
+            } // joinConversation
+            , setConvoName(cname) {
+                var e=document.getElementById("current-convo");
+                if (e!=null) {
+                    e.innerText=cname;
+                }
+            }
         } //methods
         , mounted(){
             this.initialize();
