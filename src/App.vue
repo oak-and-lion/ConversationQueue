@@ -1,20 +1,30 @@
 <template>
     <div id="hello-world-app">
-        {{msg}}
-        <div id="convo-manager-div">
-            <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
-        </div>
-        <div>
-            <div id="convo-list-message-div">
-                {{conversationsListMsg}}
+        <div id="main">
+            <div id="title">
+                {{msg}}
             </div>
-            <app-convos ref="appconvolist" v-bind:convos="convos"></app-convos>
+            <div id="convo-manager-div">
+                <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
+            </div>
+            <div>
+                <div id="convo-list-message-div">
+                    {{conversationsListMsg}}
+                </div>
+                <app-convos ref="appconvolist" v-bind:convos="convos"></app-convos>
+            </div>
+            <div>
+                <span id="convo-participant-message">{{message}}</span> <span id="current-convo"></span>
+            </div>
+            <div>
+                <app-convo-participants v-bind:convoParticipants="convoParticipants"></app-convo-participants>
+            </div>
         </div>
-        <div>
-            <span id="convo-participant-message">{{message}}</span> <span id="current-convo"></span>
-        </div>
-        <div>
-            <app-convo-participants v-bind:convoParticipants="convoParticipants"></app-convo-participants>
+        <div id="login">
+            <div id="loginMsg">
+                {{loginMsg}}
+            </div>
+            <app-login ref="" v-bind:callback="loginCallback"></app-login>
         </div>
     </div>
 </template>
@@ -23,18 +33,21 @@
     import Convos from "./components/Conversation.vue"
     import ConvoParticipants from "./components/ConversationParticipant.vue"
     import ConvoManager from "./components/ConversationManager.vue"
+    import Login from "./components/Login.vue"
 
     export default {
         components: {
             'app-convos': Convos,
             'app-convo-participants': ConvoParticipants,
-            'app-convo-manager': ConvoManager
+            'app-convo-manager': ConvoManager,
+            'app-login': Login
         },
         data () { 
           return {
             msg: "Conversations",
             message: 'Conversation Participants',
             conversationsListMsg: "Active Conversations",
+            loginMsg: "Login",
             result: '',
             responseAvailabe: false,
             convos: [],
@@ -42,7 +55,8 @@
             fetchingConvos: false,
             convoId: 0,
             convoName: '',
-            convoManagerCallback: this.createConversation
+            convoManagerCallback: this.createConversation,
+            loginCallback: this.logUserIn
           } // data return object
         },
         methods: {
@@ -102,7 +116,8 @@
                 this.fetchAPIData("cq_cd&idc=" + id, null);
             } // removeConversation
             , fetchConvoParticipants(id,cname){
-                this.setConvoName(cname);
+                this.convoName=cname;
+                this.setConvoName();
                 this.fetchAPIData("cq_ccl&idc=" + id,this.parseConvoParticipantList);
             } // fetchConvoParticipants
             , parseConvoParticipantList(response) {
@@ -132,29 +147,50 @@
                 this.fetchAPIData("cq_ca&e=" + name, null);
             } // createConversation
             , joinConversation(id,name,notes,cname) {
-                this.setConvoName(cname);
                 this.convoId=id;
                 this.convoName=cname;
+                this.setConvoName();
                 this.fetchAPIData("cq_cca&idc="+id+"&n="+name+"&no="+notes, this.refreshConvoParticipants);
             } // joinConversation
             , setConvoName(cname) {
                 var e=document.getElementById("current-convo");
                 if (e!=null) {
-                    e.innerText=cname;
+                    e.innerText=this.convoName;
                 }
-            }
+            } // setConvoName
+            , logUserIn(un,pw) {
+                console.log(un + " " + pw);
+            } // logUserIn
         } //methods
         , mounted(){
-            this.initialize();
+            if (localStorage.clientId) {
+                this.initialize();
+            } else {
+                document.getElementById("main").style.display="none";
+                document.getElementById("login").style.display="block";
+            }
         }, // mounted
     } // export
 </script>
 <style scoped>
+    #title{
+        font-size:x-large;
+        font-weight:bold;
+        text-decoration:underline;
+    }
     #convo-manager-div{
         margin-bottom: 10px;
     }
     #convo-list-message-div{
         font-weight:bold;
         font-size: large;
+    }
+    #loginMsg {
+        font-size:x-large;
+        font-weight:bold;
+        text-decoration: underline;
+    }
+    #login {
+        display:none;
     }
 </style>
