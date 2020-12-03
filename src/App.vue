@@ -6,8 +6,21 @@
             </div>
             <div id="convo-manager-div">
                 <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
+                <div>
+                    <input type="button" id="showLoginBtn" v-on:click="toggleLogin" value="Show Login"/>
+                </div>
+                <div id="login">
+                    <div id="loginMsg">
+                        {{loginMsg}}
+                    </div>
+                    <app-login ref="" v-bind:callback="loginCallback"></app-login>
+                </div>
             </div>
             <div>
+                <div>
+                    <input type="text" id="roomFilter" placeholder="Room Name" />
+                    <input type="button" id="getConvosBtn" value="Get Conversations" v-on:click="initialize"/>
+                </div>
                 <div id="convo-list-message-div">
                     {{conversationsListMsg}}
                 </div>
@@ -19,12 +32,6 @@
             <div>
                 <app-convo-participants v-bind:convoParticipants="convoParticipants"></app-convo-participants>
             </div>
-        </div>
-        <div id="login">
-            <div id="loginMsg">
-                {{loginMsg}}
-            </div>
-            <app-login ref="" v-bind:callback="loginCallback"></app-login>
         </div>
     </div>
 </template>
@@ -63,7 +70,10 @@
             initialize() {
                 if (!this.fetchingConvos) {
                     this.fetchingConvos = true;
-                    this.fetchAPIData("cq_cl",this.parseConvoList);
+                    var n=document.getElementById("roomFilter").value;
+                    if (n.length>0) {
+                        this.fetchAPIData("cq_cl&n="+n,this.parseConvoList);
+                    }
                 }
             }, // initialize
             fetchAPIData(func,callback) {
@@ -113,12 +123,12 @@
                 setTimeout(()=>{this.initialize()},5000);
             } // parseConvoList
             , removeConversation(id) {
-                this.fetchAPIData("cq_cd&idc=" + id, null);
+                this.fetchAPIData("cq_cd&idc=" + id + "&n=" + localStorage.clientId, null);
             } // removeConversation
             , fetchConvoParticipants(id,cname){
                 this.convoName=cname;
                 this.setConvoName();
-                this.fetchAPIData("cq_ccl&idc=" + id,this.parseConvoParticipantList);
+                this.fetchAPIData("cq_ccl&idc=" + id + "&n=" + localStorage.clientId,this.parseConvoParticipantList);
             } // fetchConvoParticipants
             , parseConvoParticipantList(response) {
                 var l = this.convoParticipants.length;
@@ -138,13 +148,13 @@
             } // parseConvoParticipantList
             , removeConvoParticipant(id,cid) {
                 this.convoId = cid;
-                this.fetchAPIData("cq_ccd&idc=" + id, this.refreshConvoParticipants);
+                this.fetchAPIData("cq_ccd&idc=" + id + "&n=" + localStorage.clientId, this.refreshConvoParticipants);
             } // removeConvoParticipant
             , refreshConvoParticipants() {
                 this.fetchConvoParticipants(this.convoId,this.convoName);
             } // refreshConvoParticipants
             , createConversation(name) {
-                this.fetchAPIData("cq_ca&e=" + name, null);
+                this.fetchAPIData("cq_ca&e=" + name + "&n=" + localStorage.clientId, null);
             } // createConversation
             , joinConversation(id,name,notes,cname) {
                 this.convoId=id;
@@ -159,15 +169,33 @@
                 }
             } // setConvoName
             , logUserIn(un,pw) {
-                console.log(un + " " + pw);
+                this.fetchAPIData("cq_cu&n="+un+"&no="+pw,this.parseLogin);
             } // logUserIn
+            , parseLogin(response) {
+                for (var x = 0; x < response.length; x++) {
+                    localStorage.clientId = response[x].result;
+                    document.getElementById("main").style.display="block";
+                    document.getElementById("login").style.display="none";
+                    this.initialize();
+                }
+            } // parseLogin
+            , toggleLogin() {
+                var e=document.getElementById("login");
+                var b=document.getElementById("showLoginBtn");
+                if (e.style.display=="none") {
+                    e.style.display="block";
+                    b.value="Hide Login";
+                } else {
+                    e.style.display="none";
+                    b.value="Show Login";
+                }
+            } // toggleLogin
         } //methods
         , mounted(){
             if (localStorage.clientId) {
                 this.initialize();
             } else {
-                document.getElementById("main").style.display="none";
-                document.getElementById("login").style.display="block";
+                document.getElementById("new-convo").style.display="none";
             }
         }, // mounted
     } // export
