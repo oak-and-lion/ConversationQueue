@@ -4,20 +4,25 @@
             <div id="title">
                 {{msg}}
             </div>
-            <div id="convo-manager-div">
-                <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
-                <div>
+            <div id="loginInfo">
+                <span id="login-display-name-label">Logged in as:</span> <span id="login-display-name"></span>
+            </div>
+            <div>
+                <div id="show-login-btn-div">
                     <input type="button" id="showLoginBtn" v-on:click="toggleLogin" value="Show Login"/>
                 </div>
                 <div id="login">
                     <div id="loginMsg">
                         {{loginMsg}}
                     </div>
-                    <app-login ref="" v-bind:callback="loginCallback"></app-login>
+                    <app-login ref="" v-bind:callback="loginCallback" v-bind:logoutCallback="logoutCallback"></app-login>
                 </div>
             </div>
+            <div id="convo-manager-div">
+                <app-convo-manager ref="appconvomanager" v-bind:callback="convoManagerCallback"></app-convo-manager>
+            </div>
             <div>
-                <div>
+                <div id="room-search-div">
                     <input type="text" id="roomFilter" placeholder="Room Name" />
                     <input type="button" id="getConvosBtn" value="Get Conversations" v-on:click="initialize"/>
                 </div>
@@ -51,7 +56,7 @@
         },
         data () { 
           return {
-            msg: "Conversations",
+            msg: "Conversation Queue Manager",
             message: 'Conversation Participants',
             conversationsListMsg: "Active Conversations",
             loginMsg: "Login",
@@ -63,15 +68,16 @@
             convoId: 0,
             convoName: '',
             convoManagerCallback: this.createConversation,
-            loginCallback: this.logUserIn
+            loginCallback: this.logUserIn,
+            logoutCallback: this.logUserOut
           } // data return object
         },
         methods: {
             initialize() {
-                if (!this.fetchingConvos) {
-                    this.fetchingConvos = true;
+                if (!this.fetchingConvos) {                    
                     var n=document.getElementById("roomFilter").value;
                     if (n.length>0) {
+                        this.fetchingConvos = true;
                         this.fetchAPIData("cq_cl&n="+n,this.parseConvoList);
                     }
                 }
@@ -113,7 +119,7 @@
                         name: temp[1],
                         callback: this.fetchConvoParticipants,
                         callback2: this.removeConversation,
-                        callback3: this.joinConversation
+                        callback3: this.joinConversation,
                     });
                     this.result += temp[0] + "," + temp[1] + "~";
                 }
@@ -154,8 +160,15 @@
                 this.fetchConvoParticipants(this.convoId,this.convoName);
             } // refreshConvoParticipants
             , createConversation(name) {
-                this.fetchAPIData("cq_ca&e=" + name + "&n=" + localStorage.clientId, null);
+                this.fetchAPIData("cq_ca&e=" + name + "&n=" + localStorage.clientId, this.parseCreateConvo);
             } // createConversation
+            , parseCreateConvo(response) {
+                for(var x=0;x<response.length;x++) {
+                    if (response[x].result == "4") {
+                        alert("Maximum 5 conversations at a time");
+                    }
+                }
+            } // parseCreateConvo
             , joinConversation(id,name,notes,cname) {
                 this.convoId=id;
                 this.convoName=cname;
@@ -169,20 +182,33 @@
                 }
             } // setConvoName
             , logUserIn(un,pw) {
+                localStorage.clientName=un;
+                document.getElementById("roomFilter").value=un;
                 this.fetchAPIData("cq_cu&n="+un+"&no="+pw,this.parseLogin);
             } // logUserIn
             , parseLogin(response) {
                 for (var x = 0; x < response.length; x++) {
                     localStorage.clientId = response[x].result;
-                    document.getElementById("main").style.display="block";
+                    document.getElementById("convo-manager-div").style.display="block";
+                    document.getElementById("new-convo").style.display="block";
                     document.getElementById("login").style.display="none";
                     this.initialize();
+                    document.getElementById("showLoginBtn").value="Show Login";
+                    document.getElementById("loginInfo").style.display="block";
                 }
             } // parseLogin
+            , logUserOut() {
+                localStorage.removeItem("clientName");
+                localStorage.removeItem("clientId");
+                document.getElementById("roomFilter").value="";
+                document.getElementById("convo-manager-div").style.display="none";
+                document.getElementById("loginInfo").style.display="none";
+                this.toggleLogin();
+            }
             , toggleLogin() {
                 var e=document.getElementById("login");
                 var b=document.getElementById("showLoginBtn");
-                if (e.style.display=="none") {
+                if (e.style.display=="none" || e.style.display=="") {
                     e.style.display="block";
                     b.value="Hide Login";
                 } else {
@@ -193,6 +219,11 @@
         } //methods
         , mounted(){
             if (localStorage.clientId) {
+                if (localStorage.clientName && localStorage.clientName != null) {
+                    document.getElementById("roomFilter").value=localStorage.clientName;
+                    document.getElementById("loginInfo").style.display="block";
+                    document.getElementById("login-display-name").innerText=localStorage.clientName;
+                }
                 this.initialize();
             } else {
                 document.getElementById("new-convo").style.display="none";
@@ -205,6 +236,7 @@
         font-size:x-large;
         font-weight:bold;
         text-decoration:underline;
+        text-align:center;
     }
     #convo-manager-div{
         margin-bottom: 10px;
@@ -220,5 +252,16 @@
     }
     #login {
         display:none;
+    }
+    #loginInfo {
+        display:none;
+    }
+    #show-login-btn-div {
+        margin-top:10px;
+    }
+    #room-search-div{
+        margin-bottom:10px;
+        padding-top:5px;
+        border-top:1px solid #333;
     }
 </style>

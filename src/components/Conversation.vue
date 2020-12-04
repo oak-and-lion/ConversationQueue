@@ -72,7 +72,7 @@ export default {
                     }
                 }
             }
-        } // resetist
+        } // resetList
     }
 }
 </script>
