@@ -1,4 +1,4 @@
-ALTER PROCEDURE [dbo].[_CQ_AddParticipantToConversation] 
+CREATE PROCEDURE [dbo].[_CQ_AddParticipantToConversation] 
 (
 	@idConversation AS INT,
 	@name AS VARCHAR(MAX),

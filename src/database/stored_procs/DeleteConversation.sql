@@ -1,4 +1,4 @@
-ALTER PROCEDURE [dbo].[_CQ_DeleteConversation]
+CREATE PROCEDURE [dbo].[_CQ_DeleteConversation]
 	@id AS INT
 AS
 BEGIN
